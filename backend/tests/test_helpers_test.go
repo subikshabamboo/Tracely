@@ -12,5 +12,7 @@ var (
 
 func init() {
 	godotenv.Load("../.env")
-	database.Connect()
+	if err := database.Connect(); err != nil {
+		panic("Failed to connect to testing database: " + err.Error())
+	}
 }

@@ -47,14 +47,13 @@ jobs:
     - name: Test
       working-directory: ./backend
       env:
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_USER: root
-        DB_PASSWORD: password
-        DB_NAME: tracely
+        DATABASE_URL: postgres://root:password@localhost:5432/tracely?sslmode=disable
         JWT_SECRET: supersecretkey_for_ci_testing_only
         PROMETHEUS_URL: http://localhost:9090
-      run: go test -v ./tests/...
+      run: |
+        go run ./cmd/server/main.go &
+        sleep 5
+        go test -v ./tests/...
 
   frontend-test:
     name: Frontend Verification (Flutter)
