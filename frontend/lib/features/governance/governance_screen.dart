@@ -40,7 +40,7 @@ class _GovernanceScreenState extends State<GovernanceScreen> {
   }
 
   Future<void> _deleteRule(String ruleId) async {
-    await _apiService.safePost('/governance/redaction-rules', {'action': 'delete', 'id': ruleId});
+    await _apiService.deleteRedactionRule(ruleId);
     _fetchData();
   }
 

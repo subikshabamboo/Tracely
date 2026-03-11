@@ -86,8 +86,8 @@ type Replay struct {
 	Name             string                 `gorm:"not null" json:"name"`
 	Repository       string                 `json:"repository"`         // Repo URL or name
 	CITriggerEnabled bool                   `json:"ci_trigger_enabled"` // Flag to auto-run on webhooks
-	RequestData      map[string]interface{} `gorm:"type:jsonb;not null" json:"request_data"`
-	EnvironmentVars  map[string]interface{} `gorm:"type:jsonb" json:"environment_vars"`
+	RequestData      map[string]interface{} `gorm:"type:jsonb;serializer:json;not null" json:"request_data"`
+	EnvironmentVars  map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"environment_vars"`
 	CreatedAt        time.Time              `json:"created_at"`
 	Executions       []ReplayExecution      `gorm:"foreignKey:ReplayID" json:"executions,omitempty"`
 }
@@ -132,7 +132,7 @@ type Workflow struct {
 	ID          uuid.UUID              `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkspaceID uuid.UUID              `gorm:"index;not null" json:"workspace_id"`
 	Name        string                 `gorm:"not null" json:"name"`
-	Definition  map[string]interface{} `gorm:"type:jsonb;not null" json:"definition"`
+	Definition  map[string]interface{} `gorm:"type:jsonb;serializer:json;not null" json:"definition"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
 }
@@ -272,7 +272,7 @@ type CollectionItem struct {
 	Name         string                 `gorm:"not null" json:"name"`
 	Method       string                 `gorm:"not null" json:"method"`
 	URL          string                 `gorm:"not null" json:"url"`
-	Headers      map[string]interface{} `gorm:"type:jsonb" json:"headers"`
+	Headers      map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"headers"`
 	Body         string                 `json:"body"`
 	CreatedAt    time.Time              `json:"created_at"`
 }
@@ -300,7 +300,7 @@ type Environment struct {
 	ID          uuid.UUID              `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkspaceID uuid.UUID              `gorm:"index;not null" json:"workspace_id"`
 	Name        string                 `gorm:"not null" json:"name"` // "Staging", "Production"
-	Variables   map[string]interface{} `gorm:"type:jsonb" json:"variables"`
+	Variables   map[string]interface{} `gorm:"type:jsonb;serializer:json" json:"variables"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
 }

@@ -175,7 +175,13 @@ func (s *Service) Execute(replayID uuid.UUID) (*models.ReplayExecution, error) {
 		return nil, err
 	}
 
+	// If there is an original trace, execute a full timing-aware replay
+	if replay.OriginalTraceID != "" {
+		return s.ExecuteTimingAware(replayID, true)
+	}
+
 	execution := &models.ReplayExecution{
+
 		ID:        uuid.New(),
 		ReplayID:  replayID,
 		StartTime: time.Now(),

@@ -42,6 +42,7 @@ func Connect() error {
 		&models.Trace{},
 		&models.Span{},
 		&models.Replay{},
+		&models.ReplayExecution{},
 		&models.Mock{},
 		&models.Secret{},
 		&models.Workflow{},
@@ -59,6 +60,14 @@ func Connect() error {
 		&models.RedactionRule{},
 		&models.TracingConfig{},
 		&models.AuditLog{},
+		&models.Environment{},
+		&models.MutationRecord{},
+		&models.CascadeResult{},
+		&models.ErrorInjectionConfig{},
+		&models.ErrorCascadeSimulation{},
+		&models.TraceShare{},
+		&models.RampPattern{},
+		&models.LoadTestProgress{},
 	)
 
 

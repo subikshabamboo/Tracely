@@ -2,9 +2,9 @@ name: Tracely CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "updated_ui" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "updated_ui" ]
 
 jobs:
   backend-test:

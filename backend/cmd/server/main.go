@@ -47,9 +47,15 @@ func main() {
 
 	r := gin.Default()
 
-	// Rate Limiting Middleware
-	limiter := rate.NewLimiter(rate.Every(time.Second), 100) // 100 req/s
+	// Rate Limiting Middleware - Increased for testing
+	// In production, use environment variable to configure
+	limiter := rate.NewLimiter(rate.Every(time.Second), 1000) // 1000 req/s for testing
 	r.Use(func(c *gin.Context) {
+		// Skip rate limiting for health checks
+		if c.Request.URL.Path == "/health" || c.Request.URL.Path == "/api/v1/health" {
+			c.Next()
+			return
+		}
 		if !limiter.Allow() {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Rate limit exceeded"})
 			return
@@ -181,6 +187,15 @@ func main() {
 				workspaces.POST("", middleware.RBACMiddleware("Member"), workspaceHandler.Create)
 				workspaces.GET("", workspaceHandler.GetForUser)
 				workspaces.DELETE("/:id", workspaceHandler.Delete)
+				// workspaces.POST("/:id/transfer", workspaceHandler.TransferOwnership)
+				// workspaces.POST("/:id/members", workspaceHandler.AddMember)
+				// workspaces.DELETE("/:id/members/:member_id", workspaceHandler.RemoveMember)
+				// workspaces.PATCH("/:id/members/:member_id/role", workspaceHandler.UpdateMemberRole)
+				// workspaces.GET("/:id/members", workspaceHandler.ListMembers)
+				// workspaces.GET("/:id/invitations", workspaceHandler.ListInvitations)
+				// workspaces.POST("/:id/invitations", workspaceHandler.CreateInvitation)
+				// workspaces.POST("/:id/invitations/:invitation_id/resend", workspaceHandler.ResendInvitation)
+				// workspaces.DELETE("/:id/invitations/:invitation_id", workspaceHandler.DeleteInvitation)
 			}
 
 			// Traces & Annotations
@@ -200,6 +215,13 @@ func main() {
 
 				traces.GET("/:id/annotations", annotationHandler.GetByTrace)
 				traces.POST("/config", traceHandler.SaveConfig)
+
+				traces.POST("/:id/annotations", annotationHandler.Create)
+				traces.POST("/annotations/replies", annotationHandler.CreateReply)
+				traces.GET("/annotations/threads/:id", annotationHandler.GetThread)
+
+				shareHandler := &trace.ShareHandler{}
+				traces.POST("/shares", shareHandler.Create)
 
 				traces.GET("/analytics/errors", func(c *gin.Context) {
 					c.JSON(http.StatusOK, []gin.H{
@@ -226,7 +248,20 @@ func main() {
 					c.JSON(http.StatusCreated, replay)
 				})
 				replays.POST("/:id/execute", replayHandler.Execute)
-				replays.GET("/:id/comparison", replayHandler.Compare)
+				replays.GET("/executions/:id/comparison", replayHandler.Compare)
+				// Added load execution endpoint
+				replays.POST("/:id/execute-load", replayHandler.ExecuteLoadWithRamp)
+
+				replays.GET("", func(c *gin.Context) {
+					workspaceId := c.Query("workspace_id")
+					var replays []models.Replay
+					if workspaceId != "" {
+						database.DB.Where("workspace_id = ?", workspaceId).Find(&replays)
+					} else {
+						database.DB.Find(&replays)
+					}
+					c.JSON(http.StatusOK, replays)
+				})
 			}
 
 			// Mocks
@@ -307,6 +342,16 @@ func main() {
 						return
 					}
 					c.JSON(200, gin.H{"status": "started"})
+				})
+				workflows.GET("", func(c *gin.Context) {
+					workspaceId := c.Query("workspace_id")
+					var wfs []models.Workflow
+					db := database.DB
+					if workspaceId != "" {
+						db = db.Where("workspace_id = ?", workspaceId)
+					}
+					database.DB.Find(&wfs)
+					c.JSON(http.StatusOK, wfs)
 				})
 			}
 
