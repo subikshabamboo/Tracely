@@ -1,0 +1,85 @@
+name: Tracely CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-test:
+    name: Backend Verification (Go)
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: tracely
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      prometheus:
+        image: prom/prometheus
+        ports:
+          - 9090:9090
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Build
+      working-directory: ./backend
+      run: go build -v ./cmd/server
+
+    - name: Test
+      working-directory: ./backend
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: root
+        DB_PASSWORD: password
+        DB_NAME: tracely
+        JWT_SECRET: supersecretkey_for_ci_testing_only
+        PROMETHEUS_URL: http://localhost:9090
+      run: go test -v ./tests/...
+
+  frontend-test:
+    name: Frontend Verification (Flutter)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        flutter-version: '3.22.x' # You can adjust this to your specific Flutter version
+
+    - name: Install Dependencies
+      working-directory: ./frontend
+      run: flutter pub get
+
+    - name: Analyze
+      working-directory: ./frontend
+      run: flutter analyze
+
+    - name: Run Tests
+      working-directory: ./frontend
+      run: flutter test
+
+    - name: Build Web
+      working-directory: ./frontend
+      run: flutter build web --release
