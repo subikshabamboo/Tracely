@@ -50,9 +50,24 @@ jobs:
         DATABASE_URL: postgres://root:password@localhost:5432/tracely?sslmode=disable
         JWT_SECRET: supersecretkey_for_ci_testing_only
         PROMETHEUS_URL: http://localhost:9090
+        ENCRYPTION_KEY: supersecret32byteencryptionkey12
       run: |
-        go run ./cmd/server/main.go &
-        sleep 5
+        go run ./cmd/server/main.go > server.log 2>&1 &
+        
+        # Wait for server to be ready
+        echo "Waiting for backend server to start on port 8080..."
+        timeout=30
+        while ! curl -s http://localhost:8080/api/v1/health > /dev/null; do
+          sleep 1
+          timeout=$((timeout - 1))
+          if [ $timeout -le 0 ]; then
+            echo "Timeout waiting for server!"
+            cat server.log
+            exit 1
+          fi
+        done
+        echo "Server is ready! Running tests..."
+        
         go test -v ./tests/...
 
   frontend-test:
@@ -66,7 +81,7 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         channel: 'stable'
-        flutter-version: '3.22.x' # You can adjust this to your specific Flutter version
+        flutter-version: '3.41.4'
 
     - name: Install Dependencies
       working-directory: ./frontend
