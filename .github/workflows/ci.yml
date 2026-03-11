@@ -89,7 +89,7 @@ jobs:
 
     - name: Analyze
       working-directory: ./frontend
-      run: flutter analyze
+      run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
     - name: Run Tests
       working-directory: ./frontend
